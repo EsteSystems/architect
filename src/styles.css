@@ -173,7 +173,7 @@ button:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
 .tier-pips { display: flex; gap: 3px; }
 .tier-pips > span { width: 14px; height: 6px; }
 .texture-field { display: flex; flex-direction: column; gap: 8px; }
-.texture-head { display: flex; justify-content: space-between; align-items: baseline; }
+.texture-head { display: flex; gap: 12px; justify-content: space-between; align-items: baseline; }
 .texture-note { font-size: 11px; letter-spacing: 0.06em; color: var(--muted); }
 .swatch { height: 64px; border-radius: 3px; border: 1px solid var(--line-3); }
 .texture-name { font-size: 15px; font-weight: 700; }
