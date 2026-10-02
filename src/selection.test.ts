@@ -20,6 +20,14 @@ describe('selection', () => {
     expect(pick(['wall', 'doorway', 'stone'], 0, 'roof')).toEqual(['roof']);
   });
 
+  it('keeps the material and texture when switching variant', () => {
+    const finish = ['stone', 'brick'] as const;
+    expect(pick(['wall', 'doorway', 'stone', 'brick'], 1, 'window', finish)).toEqual(['wall', 'window', 'stone', 'brick']);
+    expect(pick(['floor'], 1, 'flsq', finish)).toEqual(['floor', 'flsq', 'stone', 'brick']);
+    // Re-clicking the current variant still steps back to choose a different material.
+    expect(pick(['wall', 'doorway', 'stone', 'brick'], 1, 'doorway', finish)).toEqual(['wall', 'doorway']);
+  });
+
   it('cycles material, keeping the texture only when the new material has it', () => {
     expect(cycleMaterial(['wall', 'doorway', 'stone', 'brick'], 1)).toEqual(['wall', 'doorway', 'metal', 'corrugated']);
     expect(cycleMaterial(['wall', 'doorway', 'twig', 'lashed'], -1)).toEqual(['wall', 'doorway', 'armored', 'plated']);

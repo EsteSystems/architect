@@ -1,8 +1,8 @@
 # Architect
 
-A top-down building planner in TypeScript + React. You pick a piece from a radial
-**building plan** menu (piece type › variant › material › texture), then place it on
-the grid. Placing a piece spends resources.
+A 3D building planner in TypeScript, React and three.js. You pick a piece from a radial
+**building plan** menu (piece type › variant › material › texture), then build it on
+the grid in 3D. Placing a piece spends resources.
 
 ## Run
 
@@ -28,6 +28,10 @@ URL options: `?accent=%234FB3D9` sets the accent colour, and `?labels=off` hides
 | **T** / **Shift+T** | Cycle texture |
 | **R** | Rotate. Walls and beams move to another edge of their foundation, and pillars to another corner |
 | **X** | Demolish the piece under the cursor (refunds 50%; a foundation takes what stands on it) |
+| **WASD** / arrows | Move the view |
+| **Q** / **E** | Turn the view 45° |
+| Middle-drag or **Alt**+drag | Orbit and tilt the view |
+| **Shift**/**Ctrl**+wheel | Zoom |
 
 ## Rules
 
@@ -35,6 +39,7 @@ URL options: `?accent=%234FB3D9` sets the accent colour, and `?labels=off` hides
 - Every other piece snaps onto the foundation under the cursor. Two pieces can't overlap on the same layer
   (stairs < walls/supports < floors < roofs).
 - Cost and health come from material × variant multiplier. Texture is cosmetic only.
+- Heights: foundations are half a cell tall, walls 2.5 cells. Floors sit on top of the walls and roofs on top of the floors.
 
 ## Layout
 
@@ -42,4 +47,6 @@ URL options: `?accent=%234FB3D9` sets the accent colour, and `?labels=off` hides
 - `src/selection.ts`: menu path → selection, picking, cycling, stats
 - `src/radial.ts`: radial menu geometry
 - `src/world.ts`: grid, footprints, placement rules, demolish
+- `src/scene/`: the 3D view. `geometry.ts` builds each piece's solids, `painters.ts` paints the
+  materials' textures, `Scene3D.tsx` renders, lights, and picks what's under the cursor
 - `src/components/`: React views; `styles.css` holds the design tokens

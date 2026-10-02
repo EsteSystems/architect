@@ -23,9 +23,13 @@ const KEYS: [string, string][] = [
   ['WHEEL', 'Cycle material'],
   ['T', 'Cycle texture'],
   ['X', 'Demolish'],
+  ['WASD', 'Move view'],
+  ['Q / E', 'Turn view'],
+  ['MMB', 'Orbit'],
+  ['SHIFT+WHEEL', 'Zoom'],
 ];
 
-export function KeyLegend({ foundations, pieces }: { foundations: number; pieces: number }) {
+export function KeyLegend() {
   return (
     <div className="legend">
       {KEYS.map(([key, label]) => (
@@ -34,9 +38,14 @@ export function KeyLegend({ foundations, pieces }: { foundations: number; pieces
           {label}
         </span>
       ))}
-      <span className="counts">
-        FOUNDATIONS · {foundations} &nbsp; PIECES · {pieces}
-      </span>
+    </div>
+  );
+}
+
+export function PieceCounts({ foundations, pieces }: { foundations: number; pieces: number }) {
+  return (
+    <div className="counts">
+      FOUNDATIONS · {foundations} &nbsp; PIECES · {pieces}
     </div>
   );
 }

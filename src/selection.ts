@@ -43,10 +43,17 @@ export function isComplete(sel: Selection): sel is CompleteSelection {
   return !!(sel.category && sel.variant && sel.material && sel.texture);
 }
 
-/** Clicking a node: picks it, or un-picks it if it is already the deepest choice. */
-export function pick(path: MenuPath, depth: number, id: string): string[] {
+/**
+ * Clicking a node: picks it, or un-picks it if it is already the deepest choice.
+ * Picking a variant re-applies `finish` (the last material and texture), so switching
+ * from a doorway to a window keeps the stone brick you already chose.
+ */
+export function pick(path: MenuPath, depth: number, id: string, finish?: readonly [string, string]): string[] {
   const same = path[depth] === id && path.length === depth + 1;
-  return same ? path.slice(0, depth) : [...path.slice(0, depth), id];
+  if (same) return path.slice(0, depth);
+  const next = [...path.slice(0, depth), id];
+  if (depth === 1 && finish && path[1] !== id) next.push(...finish);
+  return next;
 }
 
 export function back(path: MenuPath): string[] {
