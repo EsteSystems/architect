@@ -26,7 +26,7 @@ URL options: `?accent=%234FB3D9` sets the accent colour, and `?labels=off` hides
 | **ESC** | Up one level; while placing, back to the menu |
 | **WHEEL** | Cycle material (keeps the texture when the new material has it) |
 | **T** / **Shift+T** | Cycle texture |
-| **R** | Rotate. Walls and beams move to another edge of their foundation, and pillars to another corner |
+| **R** | Rotate. On a foundation, walls and beams take the edge nearest the cursor and pillars the nearest corner, so R only turns other pieces there |
 | **X** | Demolish the piece under the cursor (refunds 50%; a foundation takes what stands on it) |
 | **WASD** / arrows | Move the view |
 | **Q** / **E** | Turn the view 45° |
@@ -36,7 +36,7 @@ URL options: `?accent=%234FB3D9` sets the accent colour, and `?labels=off` hides
 ## Rules
 
 - Each foundation covers a 2×2 block of grid cells. Foundations must sit on free ground.
-- Every other piece snaps onto the foundation under the cursor. Two pieces can't overlap on the same layer
+- Every other piece snaps onto the foundation under the cursor, with its base where the cursor points. Two pieces can't overlap on the same layer
   (stairs < walls/supports < floors < roofs).
 - Cost and health come from material × variant multiplier. Texture is cosmetic only.
 - Heights: foundations are half a cell tall, walls 2.5 cells. Floors sit on top of the walls and roofs on top of the floors.

@@ -233,6 +233,17 @@ export function pieceGeometry(p: Piece): BufferGeometry[] {
   }
 }
 
+/** Height of the bottom of a piece: the level the pointer aims at while placing it. */
+export function pieceBase(p: Pick<Piece, 'category' | 'variant'>): number {
+  switch (p.category) {
+    case 'foundation': return 0;
+    case 'floor': return LEVEL_TOP;
+    case 'roof': return LEVEL_TOP + FLOOR_T;
+    case 'support': return p.variant === 'beam' ? LEVEL_TOP - 1 / 3 : FOUNDATION_H;
+    default: return FOUNDATION_H;
+  }
+}
+
 /** Height of the top of a piece, for placing labels above it. */
 export function pieceTop(p: Pick<Piece, 'category'>): number {
   switch (p.category) {

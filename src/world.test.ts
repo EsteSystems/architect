@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { isComplete, resolve, type CompleteSelection } from './selection';
-import { canPlace, createWorld, demolish, footprint, pieceAt, place, snapAnchor } from './world';
+import { canPlace, createWorld, demolish, footprint, pieceAt, place, snapPlacement } from './world';
 
 const sel = (...path: string[]): CompleteSelection => {
   const s = resolve(path);
@@ -46,10 +46,39 @@ describe('world', () => {
     expect(footprint({ ...base, rot: 270 })).toEqual({ x: 48, y: 48, w: 16, h: 96 });
   });
 
-  it('snaps non-foundation ghosts onto the foundation under the pointer', () => {
+  it('puts a wall on the foundation edge nearest the pointer', () => {
     const w = place(createWorld(rich), FOUNDATION, 4, 4, 0);
-    expect(snapAnchor(w, 'wall', 4 * 48 + 90, 4 * 48 + 10)).toEqual({ col: 4, row: 4 });
-    expect(snapAnchor(w, 'foundation', 100, 100)).toEqual({ col: 1, row: 1 });
+    const wall = { category: 'wall' as const, variant: 'wfull' };
+    const at = (lx: number, lz: number) => snapPlacement(w, wall, (4 + lx) * 48, (4 + lz) * 48, 0);
+    expect(at(1, 0.2)).toEqual({ col: 4, row: 4, rot: 0 });
+    expect(at(1.9, 1)).toEqual({ col: 4, row: 4, rot: 90 });
+    expect(at(1, 1.8)).toEqual({ col: 4, row: 4, rot: 180 });
+    expect(at(0.1, 1.2)).toEqual({ col: 4, row: 4, rot: 270 });
+  });
+
+  it('puts a pillar on the nearest corner', () => {
+    const w = place(createWorld(rich), FOUNDATION, 4, 4, 0);
+    const pillar = { category: 'support' as const, variant: 'pillar' };
+    expect(snapPlacement(w, pillar, (4 + 1.7) * 48, (4 + 1.6) * 48, 0).rot).toBe(180);
+    expect(snapPlacement(w, pillar, (4 + 0.2) * 48, (4 + 0.3) * 48, 90).rot).toBe(0);
+  });
+
+  it('centres a wall\'s base on the pointer off a foundation', () => {
+    const w = createWorld(rich);
+    const wall = { category: 'wall' as const, variant: 'wfull' };
+    for (const rot of [0, 90, 180, 270] as const) {
+      const p = snapPlacement(w, wall, 10 * 48, 8 * 48, rot);
+      const r = footprint({ ...wall, ...p });
+      // The pointer lands on the wall's footprint, at the middle of its run.
+      expect(r.x <= 480 && 480 <= r.x + r.w && r.y <= 384 && 384 <= r.y + r.h).toBe(true);
+      expect(Math.abs(r.x + r.w / 2 - 480) + Math.abs(r.y + r.h / 2 - 384)).toBeLessThanOrEqual(8);
+    }
+  });
+
+  it('centres blocks on the pointer and keeps them on the ground', () => {
+    const w = createWorld(rich);
+    expect(snapPlacement(w, { category: 'foundation', variant: 'fsquare' }, 100, 100, 0)).toEqual({ col: 1, row: 1, rot: 0 });
+    expect(snapPlacement(w, { category: 'foundation', variant: 'fsquare' }, -50, 2000, 0)).toEqual({ col: 0, row: 16, rot: 0 });
   });
 
   it('demolishing a foundation takes its pieces down and refunds half', () => {

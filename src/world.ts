@@ -83,20 +83,61 @@ export function createWorld(resources: Resources, pieces: Omit<Piece, 'uid'>[] =
   };
 }
 
+export interface Placement {
+  col: number;
+  row: number;
+  rot: Rotation;
+}
+
 /**
- * Where a ghost under the pointer snaps to. Non-foundation pieces snap onto the
- * foundation beneath the pointer; foundations snap to the grid, centred on the pointer.
+ * Where a piece under the pointer goes. The pointer marks the bottom of the piece:
+ * - on a foundation, walls and beams take the edge nearest the pointer and pillars the
+ *   nearest corner, so the wall's base runs under the cursor (R is ignored for them);
+ *   other pieces cover that foundation, turned by R.
+ * - off a foundation, walls are centred on the pointer along the edge R picks, pillars
+ *   put R's corner on it, and blocks are centred on it.
  */
-export function snapAnchor(world: World, category: CategoryId, x: number, y: number): { col: number; row: number } {
-  if (category !== 'foundation') {
+export function snapPlacement(world: World, piece: Pick<Piece, 'category' | 'variant'>, x: number, y: number, rot: Rotation): Placement {
+  const shape = shapeOf(piece);
+  if (piece.category !== 'foundation') {
     const under = topFoundationAt(world, x, y);
-    if (under) return { col: under.col, row: under.row };
+    if (under) {
+      const lx = x / CELL - under.col;
+      const lz = y / CELL - under.row;
+      let r = rot;
+      if (shape === 'bar') {
+        const edges: [number, Rotation][] = [[lz, 0], [2 - lx, 90], [2 - lz, 180], [lx, 270]];
+        r = edges.reduce((best, e) => (e[0] < best[0] ? e : best))[1];
+      } else if (shape === 'post') {
+        const east = lx >= 1;
+        const south = lz >= 1;
+        r = south ? (east ? 180 : 270) : east ? 90 : 0;
+      }
+      return { col: under.col, row: under.row, rot: r };
+    }
   }
-  const col = Math.round((x - BLOCK / 2) / CELL);
-  const row = Math.round((y - BLOCK / 2) / CELL);
+
+  const gx = x / CELL;
+  const gz = y / CELL;
+  let col: number;
+  let row: number;
+  if (shape === 'bar') {
+    // The block whose `rot` edge has its midpoint at the pointer.
+    const at = { 0: [gx - 1, gz], 90: [gx - 2, gz - 1], 180: [gx - 1, gz - 2], 270: [gx, gz - 1] }[rot];
+    col = Math.round(at[0]);
+    row = Math.round(at[1]);
+  } else if (shape === 'post') {
+    const at = { 0: [gx, gz], 90: [gx - 2, gz], 180: [gx - 2, gz - 2], 270: [gx, gz - 2] }[rot];
+    col = Math.round(at[0]);
+    row = Math.round(at[1]);
+  } else {
+    col = Math.round(gx - 1);
+    row = Math.round(gz - 1);
+  }
   return {
-    col: Math.min(Math.max(col, 0), STAGE.width / CELL - 2),
-    row: Math.min(Math.max(row, 0), STAGE.height / CELL - 2),
+    col: Math.min(Math.max(col, 0), Math.floor(STAGE.width / CELL) - 2),
+    row: Math.min(Math.max(row, 0), Math.floor(STAGE.height / CELL) - 2),
+    rot,
   };
 }
 

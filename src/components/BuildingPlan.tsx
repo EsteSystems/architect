@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
 import { cycleMaterial, cycleTexture, isComplete, pick, resolve, back as menuBack, type MenuPath } from '../selection';
-import { BLOCK, canPlace, demolish, place, snapAnchor, type Rotation, type World } from '../world';
-import { FOUNDATION_H } from '../scene/geometry';
+import { BLOCK, canPlace, demolish, place, snapPlacement, type Rotation, type World } from '../world';
+import { pieceBase } from '../scene/geometry';
 import { Scene3D, type Scene3DHandle, type ScenePick } from '../scene/Scene3D';
 import { Breadcrumbs, RadialMenu } from './RadialMenu';
 import { LeafPanel } from './LeafPanel';
@@ -35,11 +35,12 @@ export function BuildingPlan({ initialWorld, initialPath = [], accent = '#F2A33A
   // The last full material + texture picked, re-applied when another variant is chosen.
   const finishRef = useRef<[string, string] | undefined>(undefined);
   if (complete) finishRef.current = [complete.material.id, complete.texture.id];
-  // Foundations are aimed at the ground; everything else at the top of the foundations.
-  const planeHeight = complete?.category.id === 'foundation' ? 0 : FOUNDATION_H;
+  // The pointer aims at the height of the piece's base, so the base sits under the cursor.
+  const pieceRef = complete ? { category: complete.category.id, variant: complete.variant.id } : null;
+  const planeHeight = pieceRef ? pieceBase(pieceRef) : 0;
 
-  const anchor = placing && hit.plan ? snapAnchor(world, complete.category.id, hit.plan.x, hit.plan.y) : null;
-  const check = anchor && complete ? canPlace(world, complete, anchor.col, anchor.row, rot) : null;
+  const anchor = placing && pieceRef && hit.plan ? snapPlacement(world, pieceRef, hit.plan.x, hit.plan.y, rot) : null;
+  const check = anchor && complete ? canPlace(world, complete, anchor.col, anchor.row, anchor.rot) : null;
   const hoveredUid = !open && !placing ? hit.uid : undefined;
 
   const pickAt = useCallback(
@@ -104,8 +105,8 @@ export function BuildingPlan({ initialWorld, initialPath = [], accent = '#F2A33A
     if (e.button === 0 && !e.altKey && placing && onWorld) {
       const h = pickAt(e.clientX, e.clientY);
       if (!h.plan) return;
-      const a = snapAnchor(world, complete.category.id, h.plan.x, h.plan.y);
-      setWorld((w) => place(w, complete, a.col, a.row, rot));
+      const a = snapPlacement(world, { category: complete.category.id, variant: complete.variant.id }, h.plan.x, h.plan.y, rot);
+      setWorld((w) => place(w, complete, a.col, a.row, a.rot));
     }
   };
 
@@ -147,7 +148,7 @@ export function BuildingPlan({ initialWorld, initialPath = [], accent = '#F2A33A
                   texture: complete.texture.id,
                   col: anchor.col,
                   row: anchor.row,
-                  rot,
+                  rot: anchor.rot,
                 },
                 valid: check.ok,
                 label: check.ok ? undefined : check.reason,
