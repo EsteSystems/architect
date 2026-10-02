@@ -32,6 +32,32 @@ describe('world', () => {
     expect(canPlace(w, WALL, 2, 2, 180).ok).toBe(true);
   });
 
+  it('treats the edge between neighbouring foundations as one spot', () => {
+    let w = createWorld(rich);
+    w = place(w, FOUNDATION, 2, 2, 0);
+    w = place(w, FOUNDATION, 4, 2, 0);
+    w = place(w, WALL, 2, 2, 90); // east edge of the west foundation, x = 4
+    expect(w.pieces).toHaveLength(3);
+    expect(canPlace(w, WALL, 4, 2, 270)).toEqual({ ok: false, reason: 'Space taken' }); // same line from the east foundation
+    expect(canPlace(w, WALL, 4, 2, 90).ok).toBe(true);
+    // A foundation offset by one cell still shares half that line.
+    w = place(w, FOUNDATION, 4, 4, 0);
+    w = place(w, FOUNDATION, 2, 5, 0);
+    expect(canPlace(w, WALL, 2, 5, 90).ok).toBe(true);
+    w = place(w, WALL, 4, 4, 270);
+    expect(canPlace(w, WALL, 2, 5, 90)).toEqual({ ok: false, reason: 'Space taken' });
+  });
+
+  it('treats the corner between neighbouring foundations as one spot', () => {
+    const PILLAR = sel('support', 'pillar', 'wood', 'plank');
+    let w = createWorld(rich);
+    w = place(w, FOUNDATION, 2, 2, 0);
+    w = place(w, FOUNDATION, 4, 2, 0);
+    w = place(w, PILLAR, 2, 2, 90); // north-east corner of the west foundation, point (4, 2)
+    expect(canPlace(w, PILLAR, 4, 2, 0)).toEqual({ ok: false, reason: 'Space taken' });
+    expect(canPlace(w, PILLAR, 4, 2, 90).ok).toBe(true);
+  });
+
   it('refuses pieces the player cannot afford', () => {
     const w = createWorld({ ...rich, stone: 100 });
     expect(canPlace(w, FOUNDATION, 0, 0, 0)).toEqual({ ok: false, reason: 'Not enough stone' });

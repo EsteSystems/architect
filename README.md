@@ -36,7 +36,8 @@ URL options: `?accent=%234FB3D9` sets the accent colour, and `?labels=off` hides
 ## Rules
 
 - Each foundation covers a 2×2 block of grid cells. Foundations must sit on free ground.
-- Every other piece snaps onto the foundation under the cursor, with its base where the cursor points. Two pieces can't overlap on the same layer
+- Every other piece snaps onto the foundation under the cursor, with its base where the cursor points.
+- Neighbouring foundations share their edges and corners: one wall (or beam) per edge, one pillar per corner. Two pieces can't overlap on the same layer
   (stairs < walls/supports < floors < roofs).
 - Cost and health come from material × variant multiplier. Texture is cosmetic only.
 - Heights: foundations are half a cell tall, walls 2.5 cells. Floors sit on top of the walls and roofs on top of the floors.

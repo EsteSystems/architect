@@ -71,6 +71,53 @@ export function footprint(p: Pick<Piece, 'category' | 'variant' | 'col' | 'row' 
   }
 }
 
+/**
+ * The grid line a wall or beam stands on, in cells: `axis` 'h' runs east–west at z = `at`,
+ * 'v' runs north–south at x = `at`, covering `from`..`to`.
+ */
+interface EdgeLine {
+  axis: 'h' | 'v';
+  at: number;
+  from: number;
+  to: number;
+}
+
+function edgeLine(p: Pick<Piece, 'col' | 'row' | 'rot'>): EdgeLine {
+  switch (p.rot) {
+    case 0: return { axis: 'h', at: p.row, from: p.col, to: p.col + 2 };
+    case 180: return { axis: 'h', at: p.row + 2, from: p.col, to: p.col + 2 };
+    case 90: return { axis: 'v', at: p.col + 2, from: p.row, to: p.row + 2 };
+    case 270: return { axis: 'v', at: p.col, from: p.row, to: p.row + 2 };
+  }
+}
+
+/** The grid point a pillar stands on, in cells. */
+function cornerPoint(p: Pick<Piece, 'col' | 'row' | 'rot'>): [number, number] {
+  const east = p.rot === 90 || p.rot === 180;
+  const south = p.rot === 180 || p.rot === 270;
+  return [p.col + (east ? 2 : 0), p.row + (south ? 2 : 0)];
+}
+
+/**
+ * Whether two pieces claim the same edge or corner. Neighbouring foundations share their
+ * edges and corners, so a wall on one side of the seam blocks a wall on the other.
+ */
+function sharesEdge(a: Pick<Piece, 'category' | 'variant' | 'col' | 'row' | 'rot'>, b: Pick<Piece, 'category' | 'variant' | 'col' | 'row' | 'rot'>): boolean {
+  const sa = shapeOf(a);
+  const sb = shapeOf(b);
+  if (sa === 'bar' && sb === 'bar') {
+    const ea = edgeLine(a);
+    const eb = edgeLine(b);
+    return ea.axis === eb.axis && ea.at === eb.at && Math.min(ea.to, eb.to) > Math.max(ea.from, eb.from);
+  }
+  if (sa === 'post' && sb === 'post') {
+    const [ax, az] = cornerPoint(a);
+    const [bx, bz] = cornerPoint(b);
+    return ax === bx && az === bz;
+  }
+  return false;
+}
+
 function overlaps(a: Rect, b: Rect): boolean {
   return a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h;
 }
@@ -167,9 +214,10 @@ export function canPlace(world: World, sel: CompleteSelection, col: number, row:
       return { ok: false, reason: 'Needs a foundation' };
     }
     const sameLayer = LAYER[sel.category.id];
-    if (world.pieces.some((p) => p.category !== 'foundation' && LAYER[p.category] === sameLayer && overlaps(footprint(p), rect))) {
-      return { ok: false, reason: 'Space taken' };
-    }
+    const taken = world.pieces.some(
+      (p) => p.category !== 'foundation' && LAYER[p.category] === sameLayer && (overlaps(footprint(p), rect) || sharesEdge(p, candidate)),
+    );
+    if (taken) return { ok: false, reason: 'Space taken' };
   }
 
   const { cost } = stats(sel.variant, sel.material);
